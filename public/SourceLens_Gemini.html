@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SourceLens — Academic Source Evaluator</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#1b2d4d;background:#f7f9fd;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;background:#f7f9fd}.head{height:70px;background:#fff;border-bottom:1px solid #e7ecf5;display:flex;align-items:center;padding:0 max(6%,calc((100% - 1100px)/2));gap:10px}.logo{width:37px;height:37px;display:grid;place-items:center;border-radius:11px;background:#eaf0ff;color:#365de2;font-size:22px}.brand{font-size:20px;font-weight:800;letter-spacing:-.6px}.wrap{max-width:850px;margin:auto;padding:50px 24px 60px}.hero{text-align:center;margin-bottom:30px}.eyebrow{display:inline-block;background:#eaf0ff;color:#3658c7;padding:7px 13px;border-radius:30px;font-size:11px;font-weight:750;letter-spacing:.5px}h1{font-size:clamp(32px,5vw,47px);letter-spacing:-1.8px;line-height:1.18;margin:20px 0 14px;color:#192c50}.sub{max-width:570px;margin:auto;color:#718098;line-height:1.9;font-size:14px}.panel{background:#fff;border:1px solid #e5eaf3;border-radius:17px;padding:28px;box-shadow:0 8px 30px #203d6910}label{display:block;font-weight:750;font-size:13px;margin-bottom:9px;color:#334563}.inputrow{display:flex;gap:10px}input[type=text]{flex:1;min-width:0;border:1px solid #dce3ef;border-radius:10px;padding:14px;font:inherit;color:#283955;outline:none}input:focus{border-color:#5373e8;box-shadow:0 0 0 3px #5373e81a}input::placeholder{color:#9aa6b9}button{cursor:pointer;font:inherit;font-weight:700;border-radius:10px;padding:12px 17px}.primary{background:#365ce4;border:1px solid #365ce4;color:white}.primary:hover{background:#2849c3}.upload{background:#fff;border:1px solid #dce3f0;color:#435472;padding:9px 13px;font-size:12px}.uploadrow{display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap}.hint{font-size:11px;color:#8793a6}.analyze{width:100%;margin-top:23px;padding:15px}.supported{display:flex;justify-content:center;gap:25px;flex-wrap:wrap;margin-top:22px;color:#748198;font-size:12px}.foot{text-align:center;color:#8b96a8;font-size:11px;line-height:1.8;margin-top:25px}.result{margin-top:20px;background:white;border:1px solid #e3e9f4;border-radius:13px;padding:20px}.hidden{display:none!important}.notice{font-size:12px;color:#6f7e95;line-height:1.8}.analysis-output{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:14px;line-height:1.85;color:#334563;margin:16px 0}.upload-note{font-size:11px;color:#8793a6;line-height:1.7}.primary:disabled{opacity:.65;cursor:wait}
+@media(max-width:560px){.wrap{padding:35px 14px}.panel{padding:18px}.inputrow{flex-direction:column}.inputrow button{width:100%}.supported{gap:13px}h1{letter-spacing:-1px}}
+</style>
+</head>
+<body>
+<header class="head"><div class="logo" aria-hidden="true">⌕</div><div class="brand">SourceLens</div></header>
+<main class="wrap">
+<section class="hero"><span class="eyebrow">✦ YOUR ACADEMIC RESEARCH ASSISTANT</span><h1>Check your sources<br>before you cite.</h1><p class="sub">Analyze the credibility and academic quality of research sources before using them in reports, projects, or academic work.</p></section>
+<section class="panel">
+<label for="source-url">Source URL or DOI</label>
+<div class="inputrow"><input id="source-url" type="text" placeholder="Paste a website URL, DOI, or paper title..." autocomplete="url"><button class="primary" id="analyze-top">Analyze Source →</button></div>
+<div class="uploadrow"><span class="upload-note">PDF analysis will be added next. For now, enter a website URL, DOI, or paper title.</span></div>
+<button class="primary analyze" id="analyze-button">✧ &nbsp; Analyze Source</button>
+<div class="supported"><span>▣ Website URL</span><span>⌘ DOI</span><span>▤ Research Paper Title</span><span>✦ Gemini AI</span></div>
+<div id="result" class="result hidden" aria-live="polite"><span id="result-label" style="font-size:11px;font-weight:800;color:#78869e;letter-spacing:1px">GEMINI ANALYSIS</span><h2 id="result-title" style="font-size:19px;margin:10px 0">Source analysis</h2><p id="result-message" class="notice">AI-assisted evaluation is a starting point. Verify important claims and publication details independently.</p><pre id="analysis-output" class="analysis-output"></pre><button class="upload" id="reset-button" type="button">Analyze another source</button></div>
+</section>
+<div class="foot">A smarter starting point for academic research.<br>AI-assisted evaluation supports your judgment — it does not replace it.</div>
+</main>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const input = $('source-url');
+  const result = $('result');
+  const topButton = $('analyze-top');
+  const analyzeButton = $('analyze-button');
+  const output = $('analysis-output');
+  const resultTitle = $('result-title');
+  const resultMessage = $('result-message');
+  const resultLabel = $('result-label');
+
+  async function analyze() {
+    const source = input.value.trim();
+
+    if (!source) {
+      input.focus();
+      input.placeholder = 'Please enter a URL, DOI, or paper title first';
+      return;
+    }
+
+    result.classList.remove('hidden');
+    resultTitle.textContent = source;
+    resultLabel.textContent = 'ANALYZING WITH GEMINI';
+    resultMessage.textContent = 'Gemini is reviewing the source. This may take a few seconds.';
+    output.textContent = 'Analyzing…';
+    topButton.disabled = true;
+    analyzeButton.disabled = true;
+    topButton.textContent = 'Analyzing…';
+    analyzeButton.textContent = 'Please wait…';
+    result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    try {
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source })
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || `Request failed (${response.status})`);
+      }
+      if (!data.analysis) {
+        throw new Error('Gemini returned an empty response. Please try again.');
+      }
+
+      resultLabel.textContent = 'GEMINI ANALYSIS';
+      resultMessage.textContent = 'This is an AI-assisted preliminary assessment, not a guarantee that the source is accurate. Verify important claims and publication details independently.';
+      output.textContent = data.analysis;
+    } catch (error) {
+      resultLabel.textContent = 'ANALYSIS ERROR';
+      resultMessage.textContent = 'SourceLens could not complete the analysis.';
+      output.textContent = error.message || 'An unexpected error occurred. Please try again.';
+    } finally {
+      topButton.disabled = false;
+      analyzeButton.disabled = false;
+      topButton.textContent = 'Analyze Source →';
+      analyzeButton.textContent = '✧  Analyze Source';
+    }
+  }
+
+  topButton.addEventListener('click', analyze);
+  analyzeButton.addEventListener('click', analyze);
+  $('reset-button').addEventListener('click', () => {
+    result.classList.add('hidden');
+    input.value = '';
+    output.textContent = '';
+    input.focus();
+  });
+  input.addEventListener('keydown', event => {
+    if (event.key === 'Enter') analyze();
+  });
+})();
+</script>
+</body>
+</html>
