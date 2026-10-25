@@ -31,11 +31,16 @@ const __dirname = path.dirname(__filename);
 const apiKey = process.env.GEMINI_API_KEY?.trim();
 
 if (!apiKey) {
-  console.error("Missing GEMINI_API_KEY. Add it to .env and restart the server.");
-  process.exit(1);
+  // Do not process.exit() here: on Vercel that crashes the function (500 FUNCTION_INVOCATION_FAILED).
+  console.error("Missing GEMINI_API_KEY. Set it in .env (local) or Vercel Environment Variables.");
 }
 
-const ai = new GoogleGenAI({ apiKey });
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+
+// Return a clear JSON error on API routes instead of crashing when the key is missing.
+app.use("/api", (_req, res, next) =>
+  ai ? next() : res.status(500).json({ error: "Server is missing GEMINI_API_KEY" })
+);
 
 // JSON for normal routes; the PDF route reads a raw binary body instead.
 app.use((req, res, next) =>
@@ -46,7 +51,7 @@ app.use((req, res, next) =>
 
 // Serve only the main HTML page; do not expose .env or server files as static assets.
 app.get("/", (_req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.get("/health", (_req, res) => {
@@ -411,6 +416,11 @@ app.use((err, req, res, next) => {
   return next(err);
 });
 
-app.listen(PORT, HOST, () => {
-  console.log(`Website Running at http://localhost:${PORT} Run with (model: ${GEMINI_MODEL})`);
-});
+// Vercel imports the exported app; only start a listener when running locally (npm start).
+if (!process.env.VERCEL) {
+  app.listen(PORT, HOST, () => {
+    console.log(`Website Running at http://localhost:${PORT} Run with (model: ${GEMINI_MODEL})`);
+  });
+}
+
+export default app;

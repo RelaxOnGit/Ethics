@@ -1,0 +1,13 @@
+@'
+{
+  "functions": {
+    "server.js": {
+      "maxDuration": 60,
+      "includeFiles": "*.html"
+    }
+  }
+}
+'@ | Set-Content -Encoding utf8 vercel.json
+git add vercel.json
+git commit -m "Add vercel.json"
+git push origin main
